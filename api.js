@@ -2,7 +2,7 @@ var express = require('express');
 var mongoose = require("mongoose")
 var app = express();
 
-var databaseUrl = 'mongodb://localhost:27017/';
+var databaseUrl = 'mongodb://localhost:27017/test';
 
 var db = mongoose.connect(databaseUrl);
 
@@ -14,7 +14,7 @@ var schema = new mongoose.Schema({
 	}
 });
 
-var cities = mongoose.model("Cities", schema);
+var cities = mongoose.model("cities", schema);
 
 app.get('/suggestions', function(req, res) {
     res.setHeader('Content-Type', 'application/json');
@@ -32,8 +32,13 @@ var suggestion = function(name, latitude, longitude, score) {
 	}
 }
 
-var suggest = function(search, longitude, latitude) {
-	console.log("Query:", search, "longitude:", longitude, "latitude:", latitude);
+var suggest = function(term, longitude, latitude) {
+    if (!term) {
+        console.log("Usage : suggestions <term> <longitude> <latitude>");
+        return;
+    }
+
+	console.log("Query:", term, "longitude:", longitude, "latitude:", latitude);
 
     var suggestions = [];
 
@@ -41,16 +46,21 @@ var suggest = function(search, longitude, latitude) {
     coordinates[0] = longitude;
     coordinates[1] = latitude;
 
-
+    // options i = case insensitive
+    // TODO what about accents ? Diacritic insensitivity
     cities.find({
-		loc: {
-    		$near: coordinates,
-    		$maxDistance: 100000
-    	}    	
+        name:  {$regex : term, $options: 'i'},
+        loc: {
+            $near: coordinates,
+            $maxDistance: 10
+        }   
+ 	
     }).exec(function(err, locations) {
     	if (err) throw err;
 
-    	console.log(locations);	
+        for (var i = 0, len = locations.length; i < len; i++) {     
+    	   console.log("Location found", JSON.stringify(locations[i], null, 4));	   
+        }
 		mongoose.disconnect();
     });
     /*
