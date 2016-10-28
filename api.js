@@ -1,9 +1,11 @@
 var express = require('express');
 var mongoose = require("mongoose")
+mongoose.Promise = require('bluebird');
+
 var app = express();
 
 var databaseUrl = 'mongodb://localhost:27017/test';
-
+var serverPort = process.argv[2] || 9999;
 var db = mongoose.connect(databaseUrl);
 
 var schema = new mongoose.Schema({
@@ -16,72 +18,60 @@ var schema = new mongoose.Schema({
 
 var cities = mongoose.model("cities", schema);
 
-app.get('/suggestions', function(req, res) {
-    res.setHeader('Content-Type', 'application/json');
+// front-end
+app.use(express.static('public'));
 
-    var suggestions = suggest(req.query.q, req.query.latitude, req.query.longitude);
-    res.send(JSON.stringify(suggestions, null, 3)); // pretty for tests purpose
+// API
+app.get('/suggestions', function(req, res) {
+    suggest(req, res);
 });
 
-var suggestion = function(name, latitude, longitude, score) {
+var convertDocumentToSuggestion = function(document) {
 	return {
-		"name" : name,
-		"latitude" : latitude,
-		"longitude" : longitude,
-		"score" : score
+		"name" : document.name,
+		"latitude" : document.loc[0],
+		"longitude" : document.loc[1],
+		"score" : 0
 	}
 }
 
-var suggest = function(term, longitude, latitude) {
-    if (!term) {
-        console.log("Usage : suggestions <term> <longitude> <latitude>");
-        return;
+var buildQuery = function(term, latitude, longitude, maxDistance) {
+    if (latitude && longitude && maxDistance) {
+        // options i = case insensitive
+        // TODO what about accents ? Diacritic insensitivity
+        return {
+            name:  {$regex : term, $options: 'i'},
+            loc: {
+                $near: [longitude, latitude],
+                $maxDistance: maxDistance
+            }
+        }
     }
 
-	console.log("Query:", term, "longitude:", longitude, "latitude:", latitude);
-
-    var suggestions = [];
-
-    var coordinates = [];
-    coordinates[0] = longitude;
-    coordinates[1] = latitude;
-
-    // options i = case insensitive
-    // TODO what about accents ? Diacritic insensitivity
-    cities.find({
-        name:  {$regex : term, $options: 'i'},
-        loc: {
-            $near: coordinates,
-            $maxDistance: 10
-        }   
- 	
-    }).exec(function(err, locations) {
-    	if (err) throw err;
-
-        for (var i = 0, len = locations.length; i < len; i++) {     
-    	   console.log("Location found", JSON.stringify(locations[i], null, 4));	   
-        }
-		mongoose.disconnect();
-    });
-    /*
-	mongoose.connect(databaseUrl, function(err, db) {
-		if (err) throw err;
-
-		var res = db.collection(database).findOne(  {name: search}  );
-		console.log(res);
-	});
-
-    suggestions.push(suggestion(search, latitude, longitude, 1));
-    suggestions.push(suggestion(search, latitude, longitude, 0));
-    suggestions.push(suggestion(search, latitude, longitude, 0.3));
-    suggestions.push(suggestion(search, latitude, longitude, 0.2));
-    suggestions.push(suggestion(search, latitude, longitude, 0.9));
-	*/
-    suggestions.sort(function(a,b){return b.score - a.score});
-
-	return { "suggestions" : suggestions};
+    return {
+        name:  {$regex : term, $options: 'i'}
+    }
 }
 
-suggest(process.argv[2], process.argv[3], process.argv[4]);
+var suggest = function(req, res) {
+    res.setHeader('Content-Type', 'application/json');
+    var query = buildQuery(req.query.q, req.query.latitude, req.query.longitude,  req.query.distance);
 
-//app.listen(8080);
+    cities.find(query)
+        .exec()
+        .then(function(rows) {
+            var suggestions = [];
+            for (var i = 0, len = rows.length; i < len; i++) {
+        	   suggestions.push(convertDocumentToSuggestion(rows[i]));
+            }
+            res.send(JSON.stringify({ "suggestions" : suggestions}, null, 3));
+        })
+        .catch(function(err) {
+            console.log("Error while querying locations:", err);
+            res.send({ "suggestions" : []});
+        });
+
+}
+
+console.log("Listening on port", serverPort);
+app.listen(serverPort);
