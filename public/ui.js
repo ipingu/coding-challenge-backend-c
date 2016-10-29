@@ -87,7 +87,7 @@
           searchLocationsPanel.append(uiSearchInput);
           controlDiv.appendChild(searchLocationsPanel.get(0));
 
-          searchLocationsInput.bind('change', function() {
+          uiSearchInput.bind('change', function() {
             searchSuggestions(_getSearchTerm());
           });
           
