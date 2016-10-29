@@ -83,8 +83,8 @@
           var searchLocationsPanel = $("<div>");
           uiSearchInput = $("<input id=\"searchLocationsInput\">");
           var searchLocationsButton = $("<button>Search</button>");
-          searchLocationsPanel.append(searchLocationsInput);
-          searchLocationsPanel.append(searchLocationsButton);
+          searchLocationsPanel.append(uiSearchInput);
+          searchLocationsPanel.append(uiSearchInput);
           controlDiv.appendChild(searchLocationsPanel.get(0));
 
           searchLocationsInput.bind('change', function() {
