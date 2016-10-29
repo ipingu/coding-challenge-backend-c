@@ -5,7 +5,7 @@ mongoose.Promise = require('bluebird');
 var app = express();
 
 var databaseUrl = 'mongodb://localhost:27017/test';
-var serverPort = process.argv[2] || 9999;
+var serverPort = process.env.PORT || process.argv[2] || 9999;
 var db = mongoose.connect(databaseUrl);
 
 var schema = new mongoose.Schema({
