@@ -4,7 +4,7 @@ mongoose.Promise = require('bluebird');
 
 var app = express();
 
-var databaseUrl = 'mongodb://localhost:27017/test';
+var databaseUrl = 'mongodb://busbud:readme@ds048719.mlab.com:48719/busbud-challenge';
 var serverPort = process.env.PORT || process.argv[2] || 9999;
 var db = mongoose.connect(databaseUrl);
 
