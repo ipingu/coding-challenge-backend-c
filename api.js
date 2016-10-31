@@ -4,8 +4,8 @@ mongoose.Promise = require('bluebird');
 
 var app = express();
 
-var databaseUrl =  "mongodb://busbud:readme@ds048719.mlab.com:48719/busbud-challenge";
-var serverPort = process.argv[2] || 9999;
+var databaseUrl = 'mongodb://busbud:readme@ds048719.mlab.com:48719/busbud-challenge';
+var serverPort = process.env.PORT || process.argv[2] || 9999;
 var db = mongoose.connect(databaseUrl);
 
 var schema = new mongoose.Schema({
