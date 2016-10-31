@@ -87,11 +87,11 @@
           searchLocationsPanel.append(searchLocationsButton);
           controlDiv.appendChild(searchLocationsPanel.get(0));
 
-          uiSearchInput.bind('change', function() {
+          uiSearchInput.on('keypress', function() {
             searchSuggestions(_getSearchTerm());
           });
           
-          searchLocationsButton.bind('click', function() {
+          searchLocationsButton.on('click', function() {
             searchSuggestions(_getSearchTerm());
           });
 
