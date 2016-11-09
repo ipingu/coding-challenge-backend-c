@@ -29,7 +29,7 @@ var modelizeLocations = function(array) {
 		var current = array[i];	
 		var location = {
 			"name" : current[1],
-			loc : [parseFloat(current[4]), parseFloat(current[5])]
+			loc : [parseFloat(current[5]), parseFloat(current[4])]
 		}
 
 		locations.push(location);
@@ -42,10 +42,12 @@ var insertLocationsInDatabase = function(locations, drop) {
 	MongoClient.connect(databaseUrl, function(err, db) {
 		console.log("Connected to MongoDB server at url " + databaseUrl);
 	
+		// Drop database prior new insertions
 		if (drop) {
 			db.collection(database).drop();
 		}
 
+		// Insert given locations
 		for (var i = 0, len = locations.length; i < len; i++) {  		
 			console.log("Insert location", locations[i]);    
 
@@ -54,12 +56,13 @@ var insertLocationsInDatabase = function(locations, drop) {
 			});	
 	  	}
 
-	  	console.log("Create 2d Index");
-	  	db.collection(database).ensureIndex( { "loc": "2d" });
+		// Create an index to allow GEO Queries
+	  	console.log("Create 2dsphere index");
+	  	db.collection(database).createIndex( { "loc": "2dsphere" });
 
+	  	// Logs never hurts
 	  	db.collection(database).count(function(err, count) {
 	    	if (err) throw err;
-
 	    	console.log(count);
     	});
 
@@ -67,7 +70,4 @@ var insertLocationsInDatabase = function(locations, drop) {
 	});
 }
 
-// Use connect method to connect to the server
-
 loadLocationsFromTsv(filename, dropBeforeInsertion);
-

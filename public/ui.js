@@ -4,7 +4,7 @@
       var defaultMapCenter = {
           lat: 45.45286,
           lng: -73.58781
-      };
+      }; // Montreal FTW
       var markers = [];
       var searchArea;
       var urlSuggestionsApi = "/suggestions";
@@ -46,6 +46,8 @@
       }
 
       var _showSearchArea = function(lat, lng, kilometers) {
+    	  _clearSearchArea();
+    	  
           this.searchArea = new google.maps.Circle({
               strokeColor: '#00FF00',
               strokeOpacity: 0.30,
@@ -63,7 +65,6 @@
 
       var _callSuggestionsApi = function(term, lat, lng, kilometers) {
           _clearMarkers();
-          _clearSearchArea();
 
           $.ajax({
               url: urlSuggestionsApi,
@@ -92,14 +93,13 @@
           });
 
           var controlDiv = document.createElement('div');
+          controlDiv.style['padding-top'] = '10px';
 
           var searchLocationsPanel = $("<div>");
           uiSearchInput = $("<input id=\"searchLocationsInput\">");
           uiKilometersInput = $("<input id=\"searchKilometersInput\">");
-          var searchLocationsButton = $("<button>Search</button>");
           searchLocationsPanel.append(uiSearchInput);
           searchLocationsPanel.append(uiKilometersInput);
-          searchLocationsPanel.append(searchLocationsButton);
           controlDiv.appendChild(searchLocationsPanel.get(0));
 
          uiKilometersInput.on('keyup', function() {
@@ -112,14 +112,6 @@
             searchSuggestionsInArea(_getSearchTerm(), mapCenter.lat(), mapCenter.lng(), _getSearchAreaInKilometers());
           });
           
-          searchLocationsButton.on('click', function() {
-            var mapCenter = map.getCenter();
-            searchSuggestionsInArea(_getSearchTerm(), mapCenter.lat(), mapCenter.lng(), _getSearchAreaInKilometers());
-          });
-
-          controlDiv.index = 1;
-          controlDiv.style['padding-top'] = '10px';
-          controlDiv.style.clear = 'both';
           map.controls[google.maps.ControlPosition.TOP_CENTER].push(controlDiv);
       };
 

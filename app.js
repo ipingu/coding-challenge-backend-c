@@ -20,22 +20,26 @@ var cities = mongoose.model("cities", schema);
 var convertDocumentToSuggestion = function(document) {
 	return {
 		"name" : document.name,
-		"latitude" : document.loc[0],
-		"longitude" : document.loc[1],
+		"latitude" : document.loc[1],
+		"longitude" : document.loc[0],
 		"score" : 0
 	}
 }
 
 /** Query database with GEO position or only by name. */
 var buildQuery = function(term, latitude, longitude, kilometers) {
-    // options i = case insensitive
-    console.log("geo", kilometers / 6371);
+    // options i = case insensitive, maxDistance in meters
     if (kilometers > 0 && latitude && longitude) {
         return {
             name:  {$regex : term, $options: 'i'},
             loc: {
-                $near: [longitude, latitude],
-                $maxDistance: kilometers / 6371
+                $near: {
+                	$geometry: {
+                		type : "Point",
+                		coordinates : [longitude, latitude]
+                	},                		
+                	$maxDistance: kilometers * 1000
+                }
             }
         }
     }
