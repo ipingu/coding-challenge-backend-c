@@ -115,6 +115,13 @@ app.get('/suggestions', function(req, res) {
 
                 suggestions.push(suggestion);
             }
+            
+            // sort array by score
+            suggestions.sort(function(a, b) {
+            	return parseFloat(b.score) - parseFloat(a.score);
+            });
+            
+            
             res.status(suggestions.length == 0 ? 404 : 200)
                 .send(JSON.stringify({
                     "suggestions": suggestions
