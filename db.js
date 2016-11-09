@@ -1,4 +1,5 @@
 var tsv = require("node-tsv-json");
+var removeDiacritics = require('diacritics').remove;
 var MongoClient = require('mongodb').MongoClient
 
 var filename = process.argv[2];
@@ -29,6 +30,7 @@ var modelizeLocations = function(array) {
 		var current = array[i];	
 		var location = {
 			"name" : current[1],
+			"searchable" : removeDiacritics(current[1]),
 			loc : [parseFloat(current[5]), parseFloat(current[4])]
 		}
 

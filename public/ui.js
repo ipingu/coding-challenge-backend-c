@@ -30,7 +30,20 @@
           });
 
           markers.push(marker);
+          return marker;
       };
+      
+      var _setWindowOnMarker = function(marker, suggestion) {
+    	  marker.addListener('click', function() {
+        	  var infowindow = new google.maps.InfoWindow({
+	          	    content: "<div><h2>" + suggestion.name + "</h2><ul>"
+	          	    		+ "<li>Score : " + suggestion.score + "</li>"
+	          	    		+ (suggestion.distance ? "<li>Distance : " + suggestion.distance + "</li>" : "")
+	          	    		+ "</ul></div>"
+	          });
+        	  infowindow.open(map, marker);
+          });
+      }
       
       var _clearMarkers = function() {
           for (var i = 0; i < markers.length; i++) {
@@ -67,6 +80,10 @@
           _clearMarkers();
     	  _clearSearchArea();
 
+     	 if (kilometers > 0) {
+    		 _showSearchArea(lat, lng, kilometers);
+    	 }
+    	  
           $.ajax({
               url: urlSuggestionsApi,
               data: {
@@ -75,13 +92,10 @@
                   longitude: lng,
                   distance: kilometers
               }
-          }).done(function(data) {
-        	 if (kilometers > 0) {
-        		 _showSearchArea(lat, lng, kilometers);
-        	 }
-        	 
+          }).done(function(data) {        	 
              $.each(data.suggestions, function(key, value) {
-                  _addMarker(value.name, parseFloat(value.latitude), parseFloat(value.longitude));
+                  var marker = _addMarker(value.name, parseFloat(value.latitude), parseFloat(value.longitude));
+                  _setWindowOnMarker(marker, value);
              });
           });
       };
@@ -97,17 +111,17 @@
 
           var searchLocationsPanel = $("<div>");
           uiSearchInput = $("<input id=\"searchLocationsInput\" placeholder=\"City or Place\">");
-          uiKilometersInput = $("<input id=\"searchKilometersInput\" placeholder=\"Distance in Kilometers\">");
+          uiKilometersInput = $("<input id=\"searchKilometersInput\" placeholder=\"Distance in Kilometers\" type=\"number\">");
           searchLocationsPanel.append(uiSearchInput);
           searchLocationsPanel.append(uiKilometersInput);
           controlDiv.append(searchLocationsPanel.get(0));
 
-         uiKilometersInput.on('keyup', function() {
+         uiKilometersInput.on('change', function() {
             var mapCenter = map.getCenter();
             searchSuggestionsInArea(_getSearchTerm(), mapCenter.lat(), mapCenter.lng(), _getSearchAreaInKilometers());
           });
 
-          uiSearchInput.on('keyup', function() {
+          uiSearchInput.on('change', function() {
             var mapCenter = map.getCenter();
             searchSuggestionsInArea(_getSearchTerm(), mapCenter.lat(), mapCenter.lng(), _getSearchAreaInKilometers());
           });
