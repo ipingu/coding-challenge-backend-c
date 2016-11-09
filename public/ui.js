@@ -6,11 +6,17 @@
           lng: -73.58781
       };
       var markers = [];
+      var searchArea;
       var urlSuggestionsApi = "/suggestions";
       var uiSearchInput = $("#searchLocationsInput");
-
+      var uiKilometersInput = $("#searchKilometersInput");
+      
       var _getSearchTerm = function() {
           return uiSearchInput.val();
+      };
+      
+      var _getSearchAreaInKilometers = function() {
+          return uiKilometersInput.val() || 0;
       };
 
       var _addMarker = function(name, lat, lng) {
@@ -25,20 +31,22 @@
 
           markers.push(marker);
       };
-
-      var _kilometersFromRadius = function(kilometers) {
-          return kilometers ? kilometers * 1000 : 0;
-      };
-
+      
       var _clearMarkers = function() {
           for (var i = 0; i < markers.length; i++) {
               markers[i].setMap(null);
           }
           markers = [];
       };
+      
+      var _clearSearchArea = function() {
+    	  if (this.searchArea) {
+    		  this.searchArea.setMap(null);
+    	  }
+      }
 
-      var _showSearchArea = function(lat, lng, radius) {
-          var searchArea = new google.maps.Circle({
+      var _showSearchArea = function(lat, lng, kilometers) {
+          this.searchArea = new google.maps.Circle({
               strokeColor: '#00FF00',
               strokeOpacity: 0.30,
               strokeWeight: 2,
@@ -49,12 +57,13 @@
                   lat: lat,
                   lng: lng
               },
-              radius: radius
+              radius: kilometers * 1000
           });
       };
 
       var _callSuggestionsApi = function(term, lat, lng, kilometers) {
           _clearMarkers();
+          _clearSearchArea();
 
           $.ajax({
               url: urlSuggestionsApi,
@@ -65,6 +74,10 @@
                   distance: kilometers
               }
           }).done(function(data) {
+        	 if (kilometers > 0) {
+        		 _showSearchArea(lat, lng, kilometers);
+        	 }
+        	 
              $.each(data.suggestions, function(key, value) {
                   _addMarker(value.name, parseFloat(value.latitude), parseFloat(value.longitude));
              });
@@ -82,17 +95,26 @@
 
           var searchLocationsPanel = $("<div>");
           uiSearchInput = $("<input id=\"searchLocationsInput\">");
+          uiKilometersInput = $("<input id=\"searchKilometersInput\">");
           var searchLocationsButton = $("<button>Search</button>");
           searchLocationsPanel.append(uiSearchInput);
+          searchLocationsPanel.append(uiKilometersInput);
           searchLocationsPanel.append(searchLocationsButton);
           controlDiv.appendChild(searchLocationsPanel.get(0));
 
-          uiSearchInput.on('keypress', function() {
-            searchSuggestions(_getSearchTerm());
+         uiKilometersInput.on('keyup', function() {
+            var mapCenter = map.getCenter();
+            searchSuggestionsInArea(_getSearchTerm(), mapCenter.lat(), mapCenter.lng(), _getSearchAreaInKilometers());
+          });
+
+          uiSearchInput.on('keyup', function() {
+            var mapCenter = map.getCenter();
+            searchSuggestionsInArea(_getSearchTerm(), mapCenter.lat(), mapCenter.lng(), _getSearchAreaInKilometers());
           });
           
           searchLocationsButton.on('click', function() {
-            searchSuggestions(_getSearchTerm());
+            var mapCenter = map.getCenter();
+            searchSuggestionsInArea(_getSearchTerm(), mapCenter.lat(), mapCenter.lng(), _getSearchAreaInKilometers());
           });
 
           controlDiv.index = 1;
@@ -105,9 +127,8 @@
           _callSuggestionsApi(term);
       };
 
-      var searchSuggestionsInArea = function(term, lat, lng, kilometers) {
-          _showSearchArea(lat, lng, _kilometersFromRadius(kilometers));
-          _callSuggestionsApi(term, lat, lgn, kilometers);
+      var searchSuggestionsInArea = function(term, lat, lng, radius) {
+          _callSuggestionsApi(term, lat, lng, radius);
       };
 
       return {

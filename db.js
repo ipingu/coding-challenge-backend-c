@@ -3,8 +3,7 @@ var MongoClient = require('mongodb').MongoClient
 
 var filename = process.argv[2];
 var database = "cities";
-var databaseUrl =  "mongodb://xxx@ds048719.mlab.com:48719/busbud-challenge"
-//var databaseUrl = "mongodb://localhost:27017/test";
+var databaseUrl = process.env.DB_URL || "mongodb://localhost:27017/test";
 var dropBeforeInsertion = true;
 
 var loadLocationsFromTsv = function(source, drop) {
