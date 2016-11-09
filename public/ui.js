@@ -65,6 +65,7 @@
 
       var _callSuggestionsApi = function(term, lat, lng, kilometers) {
           _clearMarkers();
+    	  _clearSearchArea();
 
           $.ajax({
               url: urlSuggestionsApi,
@@ -92,15 +93,14 @@
               center: defaultMapCenter
           });
 
-          var controlDiv = document.createElement('div');
-          controlDiv.style['padding-top'] = '10px';
+          var controlDiv = $("<div id=\"customControlBar\">");
 
           var searchLocationsPanel = $("<div>");
-          uiSearchInput = $("<input id=\"searchLocationsInput\">");
-          uiKilometersInput = $("<input id=\"searchKilometersInput\">");
+          uiSearchInput = $("<input id=\"searchLocationsInput\" placeholder=\"City or Place\">");
+          uiKilometersInput = $("<input id=\"searchKilometersInput\" placeholder=\"Distance in Kilometers\">");
           searchLocationsPanel.append(uiSearchInput);
           searchLocationsPanel.append(uiKilometersInput);
-          controlDiv.appendChild(searchLocationsPanel.get(0));
+          controlDiv.append(searchLocationsPanel.get(0));
 
          uiKilometersInput.on('keyup', function() {
             var mapCenter = map.getCenter();
@@ -112,7 +112,7 @@
             searchSuggestionsInArea(_getSearchTerm(), mapCenter.lat(), mapCenter.lng(), _getSearchAreaInKilometers());
           });
           
-          map.controls[google.maps.ControlPosition.TOP_CENTER].push(controlDiv);
+          map.controls[google.maps.ControlPosition.TOP_CENTER].push(controlDiv.get(0));
       };
 
       var searchSuggestions = function(term) {
